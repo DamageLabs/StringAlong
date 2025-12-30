@@ -246,4 +246,4 @@ This tool is for entertainment and educational purposes. Use responsibly. Never 
 
 ## License
 
-MIT
+Apache 2.0
