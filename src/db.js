@@ -1,6 +1,6 @@
 import initSqlJs from 'sql.js';
 
-const DB_KEY = 'scambaiter_db';
+const DB_KEY = 'stringalong_db';
 let db = null;
 
 export async function initDB() {
@@ -15,6 +15,13 @@ export async function initDB() {
   if (savedDb) {
     const uint8Array = new Uint8Array(JSON.parse(savedDb));
     db = new SQL.Database(uint8Array);
+    // Migrate: add context column if it doesn't exist
+    try {
+      db.run('ALTER TABLE conversations ADD COLUMN context TEXT DEFAULT ""');
+      saveDB();
+    } catch (e) {
+      // Column already exists, ignore
+    }
   } else {
     db = new SQL.Database();
     // Create tables
@@ -23,6 +30,7 @@ export async function initDB() {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         persona TEXT NOT NULL,
         persona_name TEXT NOT NULL,
+        context TEXT DEFAULT '',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
@@ -110,6 +118,22 @@ export async function deleteConversation(conversationId) {
   db.run('DELETE FROM messages WHERE conversation_id = ?', [conversationId]);
   db.run('DELETE FROM conversations WHERE id = ?', [conversationId]);
   saveDB();
+}
+
+export async function updateConversationContext(conversationId, context) {
+  await initDB();
+  db.run(
+    'UPDATE conversations SET context = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+    [context, conversationId]
+  );
+  saveDB();
+}
+
+export async function getConversationContext(conversationId) {
+  await initDB();
+  const result = db.exec('SELECT context FROM conversations WHERE id = ?', [conversationId]);
+  if (result.length === 0 || result[0].values.length === 0) return '';
+  return result[0].values[0][0] || '';
 }
 
 export async function clearAllConversations() {

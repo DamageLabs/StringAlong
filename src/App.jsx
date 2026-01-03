@@ -1,7 +1,7 @@
-import ScamBaiter from './ScamBaiter'
+import StringAlong from './StringAlong'
 
 function App() {
-  return <ScamBaiter />
+  return <StringAlong />
 }
 
 export default App

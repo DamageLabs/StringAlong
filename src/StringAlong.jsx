@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { initDB, createConversation, addMessage, getConversation, getAllConversations, deleteConversation } from './db';
+import { initDB, createConversation, addMessage, getConversation, getAllConversations, deleteConversation, updateConversationContext, getConversationContext } from './db';
 
 const PERSONAS = {
   confused_elderly: {
@@ -52,7 +52,7 @@ const PERSONAS = {
   }
 };
 
-export default function ScamBaiter() {
+export default function StringAlong() {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -64,6 +64,8 @@ export default function ScamBaiter() {
   const [showHistory, setShowHistory] = useState(false);
   const [providers, setProviders] = useState([]);
   const [selectedProvider, setSelectedProvider] = useState('anthropic');
+  const [personaContext, setPersonaContext] = useState('');
+  const [showContextEditor, setShowContextEditor] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -93,9 +95,11 @@ export default function ScamBaiter() {
 
   const loadConversation = async (id, persona) => {
     const msgs = await getConversation(id);
+    const context = await getConversationContext(id);
     setMessages(msgs);
     setConversationId(id);
     setSelectedPersona(persona);
+    setPersonaContext(context);
     setShowHistory(false);
   };
 
@@ -122,11 +126,15 @@ export default function ScamBaiter() {
   const generateResponse = async (scamMessage, history) => {
     const persona = PERSONAS[selectedPersona];
 
+    const contextSection = personaContext.trim()
+      ? `\n\nADDITIONAL CONTEXT (incorporate naturally into your responses):\n${personaContext.trim()}\n`
+      : '';
+
     const systemPrompt = `You are ${persona.name}, age ${persona.age}. You're texting with someone and your goal is to keep the conversation going as long as possible by being friendly but slow and easily confused.
 
 CHARACTER TRAITS: ${persona.traits}
 
-WRITING STYLE: ${persona.style}
+WRITING STYLE: ${persona.style}${contextSection}
 
 TEXT MESSAGE TACTICS:
 - Ask for clarification on things already explained
@@ -206,8 +214,11 @@ Respond as ${persona.name} would text.`;
     setMessages(newMessages);
     setIsLoading(true);
 
-    // Save scammer message
+    // Save scammer message and context
     await addMessage(currentConvoId, 'scammer', scamMessage);
+    if (personaContext.trim()) {
+      await updateConversationContext(currentConvoId, personaContext);
+    }
 
     const response = await generateResponse(scamMessage, messages);
 
@@ -223,6 +234,7 @@ Respond as ${persona.name} would text.`;
     setMessages([]);
     setConversationId(null);
     setError(null);
+    setPersonaContext('');
   };
 
   const startNewConversation = () => {
@@ -230,6 +242,7 @@ Respond as ${persona.name} would text.`;
     setConversationId(null);
     setError(null);
     setShowHistory(false);
+    setPersonaContext('');
   };
 
   const exportConversation = () => {
@@ -248,7 +261,7 @@ Respond as ${persona.name} would text.`;
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `scambaiter-${persona.name.toLowerCase()}-${timestamp}.txt`;
+    a.download = `stringalong-${persona.name.toLowerCase()}-${timestamp}.txt`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -315,6 +328,31 @@ Respond as ${persona.name} would text.`;
             )}
           </div>
           <p className="text-green-300/70 text-xs mt-1">{persona.traits}</p>
+
+          {/* Context Editor Toggle */}
+          <button
+            onClick={() => setShowContextEditor(!showContextEditor)}
+            className="mt-2 text-xs text-green-400 hover:text-green-300 flex items-center gap-1"
+          >
+            <span>{showContextEditor ? '▼' : '▶'}</span>
+            <span>Add Custom Info {personaContext && '(active)'}</span>
+          </button>
+
+          {/* Context Editor */}
+          {showContextEditor && (
+            <div className="mt-2">
+              <textarea
+                value={personaContext}
+                onChange={(e) => setPersonaContext(e.target.value)}
+                placeholder="Add facts the persona should know (e.g., 'The scammer claims to be from Microsoft support' or 'They mentioned a prize of $5000')"
+                rows={3}
+                className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder-white/40 focus:outline-none focus:border-green-500 resize-none text-sm"
+              />
+              <p className="text-green-300/50 text-xs mt-1">
+                This info will be included in future responses for this conversation
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Chat Container */}

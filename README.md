@@ -50,7 +50,7 @@ StringAlong supports multiple AI providers. You can switch between them in the U
 1. **Clone or download the repository**
    ```bash
    git clone <repository-url>
-   cd scambaiter
+   cd stringalong
    ```
 
 2. **Install dependencies**
@@ -161,10 +161,10 @@ The console will show which providers are configured.
 ## Project Structure
 
 ```
-scambaiter/
+stringalong/
 ├── src/
 │   ├── App.jsx          # Main app component
-│   ├── ScamBaiter.jsx   # Main StringAlong component
+│   ├── StringAlong.jsx  # Main StringAlong component
 │   ├── db.js            # SQLite database utilities
 │   ├── main.jsx         # React entry point
 │   └── index.css        # Tailwind CSS imports
