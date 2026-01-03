@@ -7,6 +7,7 @@ A web app that generates AI-powered responses to waste scammers' time. Choose fr
 ## Features
 
 - **8 unique personas** - From confused elderly to paranoid preppers, each with distinct personalities
+- **Custom persona context** - Add custom facts and information to personas for more relevant responses
 - **Multiple AI providers** - Anthropic Claude, OpenAI GPT-4o, or local Ollama
 - **Text message style** - Responses are crafted to look like real text messages
 - **Conversation history** - All conversations saved locally via SQLite (browser storage)
@@ -158,6 +159,35 @@ The console will show which providers are configured.
 5. **Copy the response** - Click "Copy" on the response bubble
 6. **Send it back** - Paste the response to the scammer and continue the conversation
 
+## Custom Persona Context
+
+You can add custom information to any persona to make responses more contextually relevant. This is useful for:
+
+- Providing details about what the scammer has claimed (e.g., "They say they're from Microsoft support")
+- Adding facts the persona should reference (e.g., "They mentioned I won $5000")
+- Setting up specific scenarios (e.g., "The scammer sent a fake invoice for $299")
+
+### How to Use
+
+1. Click the **"Add Custom Info"** button under the active persona card
+2. Enter any relevant context in the text area
+3. This information will be incorporated into all future AI responses for this conversation
+4. Custom context is automatically saved and restored when you load a saved conversation
+
+### Examples
+
+```
+The scammer claims to be from the IRS and says I owe $5,000 in back taxes.
+```
+
+```
+They sent me a link to claim my "prize" of $1,000,000 from a lottery I never entered.
+```
+
+```
+The caller says my computer has a virus and they need remote access to fix it.
+```
+
 ## Project Structure
 
 ```
@@ -175,7 +205,8 @@ stringalong/
 ├── tailwind.config.js   # Tailwind CSS configuration
 ├── postcss.config.js    # PostCSS configuration
 ├── .env                 # Environment variables (create from .env.example)
-└── .env.example         # Example environment file
+├── .env.example         # Example environment file
+└── CHANGELOG.md         # Version history and changes
 ```
 
 ## Dependencies
