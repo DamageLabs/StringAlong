@@ -675,7 +675,7 @@ Respond as ${persona.name} would text.`;
           For entertainment and scammer time-wasting only. Never share real personal information.
         </p>
         <p className="text-center text-white text-xs mt-2">
-          Copyright 2025 DamageLabs
+          Copyright 2025-2026 DamageLabs
         </p>
       </div>
     </div>
