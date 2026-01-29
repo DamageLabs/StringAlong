@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { FaGithub } from 'react-icons/fa';
 import { initDB, createConversation, addMessage, getConversation, getAllConversations, deleteConversation, updateConversationContext, getConversationContext } from './db';
 
 const PERSONAS = {
@@ -675,16 +676,17 @@ Respond as ${persona.name} would text.`;
           For entertainment and scammer time-wasting only. Never share real personal information.
         </p>
         <p className="text-center text-white text-xs mt-2">
-          Copyright 2025-2026 DamageLabs |{' '}
-          <a
-            href="https://github.com/DamageLabs/StringAlong"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline hover:text-gray-300"
-          >
-            GitHub
-          </a>
+          Copyright 2025-2026 DamageLabs
         </p>
+        <a
+          href="https://github.com/DamageLabs/StringAlong"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block text-center text-white mt-2 hover:text-gray-300"
+          aria-label="GitHub repository"
+        >
+          <FaGithub size={28} className="inline-block" />
+        </a>
       </div>
     </div>
   );
