@@ -85,11 +85,11 @@ export async function addMessage(conversationId, type, text) {
 export async function getConversation(conversationId) {
   await initDB();
   const messages = db.exec(
-    'SELECT type, text FROM messages WHERE conversation_id = ? ORDER BY id',
+    'SELECT type, text, created_at FROM messages WHERE conversation_id = ? ORDER BY id',
     [conversationId]
   );
   if (messages.length === 0) return [];
-  return messages[0].values.map(([type, text]) => ({ type, text }));
+  return messages[0].values.map(([type, text, created_at]) => ({ type, text, timestamp: created_at }));
 }
 
 export async function getAllConversations() {

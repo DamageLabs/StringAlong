@@ -49,6 +49,12 @@ const PERSONAS = {
     age: 42,
     traits: "Single mom of 4 kids always in chaos. Kids grabbing her phone, something burning on stove. Genuinely interested but can never focus. Sends half-finished messages. Texts back hours later having forgotten the conversation.",
     style: "Fragmented sentences, 'hold on one sec', 'sorry kids', loses track of conversation, 'wait what were we talking about', typos from rushing"
+  },
+  skeptical_veteran: {
+    name: "Benny",
+    age: 53,
+    traits: "Former Marine (Desert Storm, two tours in Iraq) who lost his left leg below the knee to an IED in 2006. Lives on VA disability, fiercely independent but isolated. Dedicated fitness junkie - hits the gym daily, competes in adaptive CrossFit, trains for Warrior Games and marathons with his running blade. Uses fitness to manage PTSD and prove he's still capable. Deeply skeptical of strangers due to military training. Goes to VA hospital for appointments and prosthetic adjustments. Has a service dog named Sergeant. Mentions his buddy Rico from the VFW who 'knows about scams' and wants to verify everything through him. Ex-wife left after he came back 'different'. Drinks too much sometimes and texts late at night. Phantom limb pain flares up and distracts him mid-conversation.",
+    style: "Blunt, military directness mixed with sudden vulnerability. Uses military time and jargon occasionally. Lots of delays - 'at the gym', 'just finished a 10K', 'sorry had a VA appointment', 'leg was bothering me after deadlifts'. Talks about PRs, macros, and training schedules. Suspicious of links and asks pointed questions about identity. Mentions running things by Rico before deciding anything. Sometimes gets emotional about fallen buddies. One-handed typing when prosthetic is off, lots of typos. Dark humor about his disability."
   }
 };
 
@@ -67,9 +73,16 @@ export default function StringAlong() {
   const [personaContext, setPersonaContext] = useState('');
   const [showContextEditor, setShowContextEditor] = useState(false);
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   useEffect(() => {
@@ -210,7 +223,8 @@ Respond as ${persona.name} would text.`;
       setConversationId(currentConvoId);
     }
 
-    const newMessages = [...messages, { type: 'scammer', text: scamMessage }];
+    const scammerTimestamp = new Date().toISOString();
+    const newMessages = [...messages, { type: 'scammer', text: scamMessage, timestamp: scammerTimestamp }];
     setMessages(newMessages);
     setIsLoading(true);
 
@@ -226,7 +240,8 @@ Respond as ${persona.name} would text.`;
     await addMessage(currentConvoId, 'victim', response);
     await loadSavedConversations();
 
-    setMessages([...newMessages, { type: 'victim', text: response }]);
+    const victimTimestamp = new Date().toISOString();
+    setMessages([...newMessages, { type: 'victim', text: response, timestamp: victimTimestamp }]);
     setIsLoading(false);
   };
 
@@ -245,6 +260,12 @@ Respond as ${persona.name} would text.`;
     setPersonaContext('');
   };
 
+  const formatExportTimestamp = (timestamp) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    return date.toLocaleString();
+  };
+
   const exportConversation = () => {
     if (messages.length === 0) return;
 
@@ -254,7 +275,8 @@ Respond as ${persona.name} would text.`;
 
     const content = messages.map(msg => {
       const sender = msg.type === 'scammer' ? 'SCAMMER' : persona.name.toUpperCase();
-      return `[${sender}]\n${msg.text}\n`;
+      const time = msg.timestamp ? ` - ${formatExportTimestamp(msg.timestamp)}` : '';
+      return `[${sender}${time}]\n${msg.text}\n`;
     }).join('\n');
 
     const blob = new Blob([header + content], { type: 'text/plain' });
@@ -264,6 +286,109 @@ Respond as ${persona.name} would text.`;
     a.download = `stringalong-${persona.name.toLowerCase()}-${timestamp}.txt`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const importConversation = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const lines = text.split('\n');
+
+      // Parse header to get persona
+      const personaLine = lines.find(l => l.startsWith('Persona:'));
+      if (!personaLine) {
+        setError('Invalid export file: missing persona header');
+        return;
+      }
+
+      // Extract persona name from "Persona: Uncle Doug, 67"
+      const personaMatch = personaLine.match(/Persona:\s*([^,]+)/);
+      if (!personaMatch) {
+        setError('Invalid export file: could not parse persona');
+        return;
+      }
+
+      const personaName = personaMatch[1].trim();
+
+      // Find matching persona key
+      const personaKey = Object.keys(PERSONAS).find(
+        key => PERSONAS[key].name.toLowerCase() === personaName.toLowerCase()
+      );
+
+      if (!personaKey) {
+        setError(`Unknown persona: ${personaName}`);
+        return;
+      }
+
+      // Parse messages - format: [SENDER - timestamp] or [SENDER]
+      const parsedMessages = [];
+      const messageRegex = /^\[([^\]]+)\]\s*$/;
+      let currentSender = null;
+      let currentTimestamp = null;
+      let currentText = [];
+
+      for (const line of lines) {
+        const match = line.match(messageRegex);
+        if (match) {
+          // Save previous message if exists
+          if (currentSender !== null && currentText.length > 0) {
+            const isScammer = currentSender.toUpperCase().startsWith('SCAMMER');
+            parsedMessages.push({
+              type: isScammer ? 'scammer' : 'victim',
+              text: currentText.join('\n').trim(),
+              timestamp: currentTimestamp
+            });
+          }
+
+          // Parse new sender line: "SCAMMER - 1/17/2026, 2:13:12 PM" or just "SCAMMER"
+          const senderParts = match[1].split(' - ');
+          currentSender = senderParts[0].trim();
+          currentTimestamp = senderParts[1] ? new Date(senderParts[1].trim()).toISOString() : new Date().toISOString();
+          currentText = [];
+        } else if (currentSender !== null && !line.startsWith('StringAlong') && !line.startsWith('Persona:') && !line.startsWith('Date:') && !line.startsWith('===')) {
+          currentText.push(line);
+        }
+      }
+
+      // Don't forget the last message
+      if (currentSender !== null && currentText.length > 0) {
+        const isScammer = currentSender.toUpperCase().startsWith('SCAMMER');
+        parsedMessages.push({
+          type: isScammer ? 'scammer' : 'victim',
+          text: currentText.join('\n').trim(),
+          timestamp: currentTimestamp
+        });
+      }
+
+      if (parsedMessages.length === 0) {
+        setError('No messages found in export file');
+        return;
+      }
+
+      // Create new conversation in database
+      const newConvoId = await createConversation(personaKey, PERSONAS[personaKey].name);
+
+      // Add all messages to database
+      for (const msg of parsedMessages) {
+        await addMessage(newConvoId, msg.type, msg.text);
+      }
+
+      // Update state
+      setSelectedPersona(personaKey);
+      setConversationId(newConvoId);
+      setMessages(parsedMessages);
+      setPersonaContext('');
+      setError(null);
+      await loadSavedConversations();
+
+    } catch (err) {
+      setError(`Failed to import: ${err.message}`);
+    }
+
+    // Reset file input
+    e.target.value = '';
   };
 
   const persona = PERSONAS[selectedPersona];
@@ -382,6 +507,7 @@ Respond as ${persona.name} would text.`;
                   <div className="flex justify-between items-center mb-1">
                     <span className="text-xs opacity-60">
                       {msg.type === 'scammer' ? 'Scammer' : persona.name}
+                      {msg.timestamp && <span className="ml-2">{formatTimestamp(msg.timestamp)}</span>}
                     </span>
                     {msg.type === 'victim' && (
                       <button
@@ -441,6 +567,15 @@ Respond as ${persona.name} would text.`;
           </form>
         </div>
 
+        {/* Hidden file input for import */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={importConversation}
+          accept=".txt"
+          className="hidden"
+        />
+
         {/* Actions */}
         <div className="flex justify-between items-center mt-4">
           <div className="flex gap-4">
@@ -456,6 +591,12 @@ Respond as ${persona.name} would text.`;
               className="text-purple-300 hover:text-white text-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
               Export
+            </button>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="text-purple-300 hover:text-white text-sm transition-colors"
+            >
+              Import
             </button>
             <button
               onClick={() => setShowHistory(!showHistory)}
