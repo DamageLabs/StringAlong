@@ -675,7 +675,15 @@ Respond as ${persona.name} would text.`;
           For entertainment and scammer time-wasting only. Never share real personal information.
         </p>
         <p className="text-center text-white text-xs mt-2">
-          Copyright 2025-2026 DamageLabs
+          Copyright 2025-2026 DamageLabs |{' '}
+          <a
+            href="https://github.com/DamageLabs/StringAlong"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-gray-300"
+          >
+            GitHub
+          </a>
         </p>
       </div>
     </div>
