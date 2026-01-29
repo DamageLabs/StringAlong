@@ -8,7 +8,11 @@
       "Bash(npm install:*)",
       "Bash(find:*)",
       "Bash(git reset:*)",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(lsof:*)",
+      "Bash(xargs:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
