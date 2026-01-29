@@ -6,7 +6,7 @@ A web app that generates AI-powered responses to waste scammers' time. Choose fr
 
 ## Features
 
-- **8 unique personas** - From confused elderly to paranoid preppers, each with distinct personalities
+- **9 unique personas** - From confused elderly to paranoid preppers, each with distinct personalities
 - **Custom persona context** - Add custom facts and information to personas for more relevant responses
 - **Multiple AI providers** - Anthropic Claude, OpenAI GPT-4o, or local Ollama
 - **Text message style** - Responses are crafted to look like real text messages
@@ -26,6 +26,7 @@ A web app that generates AI-powered responses to waste scammers' time. Choose fr
 | Dale | 58 | Paranoid prepper, conspiracy theories, won't click links |
 | Pastor Jim | 71 | Overly friendly widowed pastor, very forward |
 | Tanya | 42 | Chaotic single mom, constant interruptions |
+| Benny | 53 | Skeptical veteran, military directness, verifies everything |
 
 ## AI Providers
 
@@ -213,6 +214,7 @@ stringalong/
 
 ### Production
 - **react** / **react-dom** - UI framework
+- **react-icons** - Icon library for UI elements
 - **express** - Backend server
 - **dotenv** - Environment variable management
 - **sql.js** - SQLite in the browser for conversation storage
