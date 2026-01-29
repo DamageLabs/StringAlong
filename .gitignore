@@ -21,6 +21,9 @@ npm-debug.log*
 *.swo
 .DS_Store
 
+# Claude Code
+.claude/settings.local.json
+
 # Cache
 .cache/
 .parcel-cache/
